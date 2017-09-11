@@ -79,6 +79,7 @@
  * @si:  [OUT]
  * @di:  [OUT]
  */
+#ifndef __PPC64__
 #define VMW_PORT(cmd, in_bx, in_si, in_di, \
          port_num, magic,                  \
          ax, bx, cx, dx, si, di)           \
@@ -98,7 +99,7 @@
       "D"(in_di) :                         \
       "memory");                           \
 })
-
+#endif
 
 
 /**
@@ -294,13 +295,13 @@ static enum pipe_error
 svga_open_channel(struct rpc_channel *channel, unsigned protocol)
 {
    VMW_REG ax = 0, bx = 0, cx = 0, dx = 0, si = 0, di = 0;
-
+#ifndef __PPC64__
    VMW_PORT(VMW_PORT_CMD_OPEN_CHANNEL,
       (protocol | GUESTMSG_FLAG_COOKIE), si, di,
       VMW_HYPERVISOR_PORT,
       VMW_HYPERVISOR_MAGIC,
       ax, bx, cx, dx, si, di);
-
+#endif
    if ((HIGH_WORD(cx) & MESSAGE_STATUS_SUCCESS) == 0)
       return PIPE_ERROR;
 
@@ -328,13 +329,13 @@ svga_close_channel(struct rpc_channel *channel)
    /* Set up additional parameters */
    si = channel->cookie_high;
    di = channel->cookie_low;
-
+#ifndef __PPC64__
    VMW_PORT(VMW_PORT_CMD_CLOSE_CHANNEL,
       0, si, di,
       (VMW_HYPERVISOR_PORT | (channel->channel_id << 16)),
       VMW_HYPERVISOR_MAGIC,
       ax, bx, cx, dx, si, di);
-
+#endif
    if ((HIGH_WORD(cx) & MESSAGE_STATUS_SUCCESS) == 0)
       return PIPE_ERROR;
 
@@ -365,13 +366,13 @@ svga_send_msg(struct rpc_channel *channel, const char *msg)
       /* Set up additional parameters */
       si = channel->cookie_high;
       di = channel->cookie_low;
-
+#ifndef __PPC64__
       VMW_PORT(VMW_PORT_CMD_SENDSIZE,
          msg_len, si, di,
          VMW_HYPERVISOR_PORT | (channel->channel_id << 16),
          VMW_HYPERVISOR_MAGIC,
          ax, bx, cx, dx, si, di);
-
+#endif
       if ((HIGH_WORD(cx) & MESSAGE_STATUS_SUCCESS) == 0 ||
           (HIGH_WORD(cx) & MESSAGE_STATUS_HB) == 0) {
          /* Expected success + high-bandwidth. Give up. */
